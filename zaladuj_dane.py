@@ -1,7 +1,7 @@
 import random
 from core.models import Manufacturer, Drug, Patient, Objaw, Zdarzenie
 
-print("--- ROZPOCZYNAM ŁADOWANIE DANYCH (WERSJA OPTYMISTYCZNA) ---")
+print("--- ROZPOCZYNAM ŁADOWANIE DANYCH (ULEPSZONE) ---")
 
 # 1. CZYSZCZENIE STAREJ BAZY
 print("Usuwanie starych danych...")
@@ -11,7 +11,7 @@ Drug.objects.all().delete()
 Manufacturer.objects.all().delete()
 Objaw.objects.all().delete()
 
-# 2. TWORZENIE PRODUCENTÓW (Sortowanie A-Z)
+# 2. TWORZENIE PRODUCENTÓW (TWOJA LISTA)
 surowa_lista_producentow = [
     "Polpharma", "Zentiva", "Sandoz", "KRKA", "Hasco-Lek", "Teva Pharmaceuticals",
     "Perrigo", "Boehringer Ingelheim", "MSD (Merck Sharp & Dohme)", "Novartis",
@@ -25,7 +25,7 @@ for nazwa in surowa_lista_producentow:
     producenci_db.append(p)
 print(f"--> Dodano {len(producenci_db)} producentów.")
 
-# 3. TWORZENIE LEKÓW
+# 3. TWORZENIE LEKÓW (TWOJA LISTA + AUTOMATYCZNE ROZPOZNAWANIE SUBSTANCJI)
 lista_lekow_nazwy = [
     "Movalis", "Meloksikam Polpharma", "Meloksikam Zentiva", "Aspicam", "Meloksikam Sandoz",
     "Indometacyna Polpharma", "Indometacyna Hasco", "Indocid", "Indometacyna Zentiva",
@@ -39,10 +39,25 @@ lista_lekow_nazwy = [
     "Naproksen Teva", "Ibum", "Ibufen", "Ibuprofen Zentiva", "Ibuprofen Teva", "Ibuprofen Stada"
 ]
 
+def rozpoznaj_substancje(nazwa_leku):
+    n = nazwa_leku.lower()
+    if "meloksikam" in n or "movalis" in n or "aspicam" in n: return "Meloksikam"
+    if "indometacyna" in n or "indocid" in n: return "Indometacyna"
+    if "diklofenak" in n or "voltaren" in n or "diclo" in n: return "Diklofenak"
+    if "pyralgina" in n or "pyreox" in n or "gardan" in n: return "Metamizol"
+    if "paracetamol" in n or "calpol" in n: return "Paracetamol"
+    if "aspirin" in n or "polopiryna" in n or "acard" in n or "polocard" in n: return "Kwas acetylosalicylowy"
+    if "piroksikam" in n or "feldene" in n: return "Piroksikam"
+    if "ketonal" in n or "ketoprofen" in n or "ketolek" in n or "febrofen" in n: return "Ketoprofen"
+    if "naproxen" in n or "nalgesin" in n or "apo-napro" in n or "vemonis" in n: return "Naproksen"
+    if "ibuprofen" in n or "ibum" in n or "ibufen" in n: return "Ibuprofen"
+    return "Inna substancja"
+
 leki_db = []
 for nazwa in lista_lekow_nazwy:
     wylosowany_producent = random.choice(producenci_db)
-    lek = Drug.objects.create(lek=nazwa, active_substance="Substancja czynna", manufacturer=wylosowany_producent)
+    substancja = rozpoznaj_substancje(nazwa) # <--- TO NAPRAWIA WYKRES
+    lek = Drug.objects.create(lek=nazwa, active_substance=substancja, manufacturer=wylosowany_producent)
     leki_db.append(lek)
 print(f"--> Dodano {len(leki_db)} leków.")
 
@@ -62,38 +77,41 @@ for i in range(250):
     pacjenci_db.append(p)
 print(f"--> Dodano {len(pacjenci_db)} pacjentów.")
 
-# 6. TWORZENIE ZDARZEŃ (WERSJA OPTYMISTYCZNA)
-print("Generowanie raportów (Ustawianie, aby leki częściej pomagały)...")
+# 6. TWORZENIE ZDARZEŃ (Twoja logika)
+print("Generowanie raportów...")
 
 for pacjent in pacjenci_db:
-    los = random.random() # Losuje liczbę od 0.0 do 1.0
+    los = random.random()
+    lek = random.choice(leki_db)
     
-    if los < 0.70: 
-        # 70% SZANS: LEK POMAGA (Duży ból przed -> Mały ból po)
+    # Mały dodatek logiczny dla Heatmapy:
+    # Zróbmy tak, że Ketoprofen działa lepiej na dorosłych, a Paracetamol słabiej na seniorów
+    # (To tylko symulacja, żeby heatmapa była kolorowa)
+    szansa = 0.70
+    if lek.active_substance == "Paracetamol" and pacjent.age > 65: szansa = 0.40
+    if lek.active_substance == "Ketoprofen" and 35 <= pacjent.age <= 65: szansa = 0.95
+
+    if los < szansa: 
         przed = random.randint(7, 10)
         po = random.randint(1, 4)
         opis = "Widoczna poprawa kliniczna."
-        
-    elif los < 0.90:
-        # 20% SZANS: BEZ ZMIAN (Np. 5 -> 5)
+    elif los < szansa + 0.20:
         wartosc = random.randint(3, 8)
         przed = wartosc
         po = wartosc
-        opis = "Brak istotnej zmiany w samopoczuciu."
-        
+        opis = "Brak istotnej zmiany."
     else:
-        # 10% SZANS: ZASZKODZIŁ (Mały ból przed -> Duży po)
         przed = random.randint(1, 4)
         po = random.randint(6, 9)
-        opis = "Wystąpienie działań niepożądanych."
+        opis = "Działania niepożądane."
 
     zdarzenie = Zdarzenie.objects.create(
         patient=pacjent,
-        drug=random.choice(leki_db),
+        drug=lek,
         nasilenie_przed=przed,
         nasilenie_po=po,
         opis=opis
     )
     zdarzenie.objawy.add(random.choice(objawy_db))
 
-print("--- SUKCES! DANE ZAKTUALIZOWANE (TERAZ LEKI DZIAŁAJĄ LEPIEJ) ---")
+print("--- DANE ZAŁADOWANE POMYŚLNIE ---")
