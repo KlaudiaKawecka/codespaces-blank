@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>System Farmakowatchingu</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow">
+    <div class="container">
+        <span class="navbar-brand h1 mb-0">💊 System Farmakowatchingu</span>
+        <div class="d-flex">
+            {% if user.is_authenticated %}
+                <span class="navbar-text me-3 text-white">Witaj, <strong>{{ user.username }}</strong>!</span>
+                {% if user.is_staff %}
+                    <a href="/admin" class="btn btn-warning btn-sm me-2">Panel Admina</a>
+                {% endif %}
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-light btn-sm">Wyloguj</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-success btn-sm">Zaloguj się</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<div class="container pb-5">
+    
+    <div class="row mb-4">
+        <div class="col-lg-4">
+            <div class="row g-3 h-100">
+                <div class="col-12"><div class="card text-white bg-primary shadow-sm h-100"><div class="card-body text-center d-flex flex-column justify-content-center"><h3>{{ liczba_zgloszen }}</h3><p class="mb-0">Wszystkich Raportów</p></div></div></div>
+                <div class="col-6"><div class="card text-white bg-success shadow-sm h-100"><div class="card-body text-center"><h3>{{ liczba_pacjentow }}</h3><p class="mb-0">Pacjentów</p></div></div></div>
+                <div class="col-6"><div class="card text-white bg-info shadow-sm h-100"><div class="card-body text-center"><h3>{{ liczba_lekow }}</h3><p class="mb-0">Leków</p></div></div></div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">Ogólna Skuteczność</div>
+                <div class="card-body">
+                    <canvas id="skutecznoscChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">Skuteczność wg Płci</div>
+                <div class="card-body">
+                    <canvas id="plecChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">Skuteczność wg Wieku Pacjenta</div>
+                <div class="card-body">
+                    <canvas id="wiekChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">Top 5 Najskuteczniejszych Substancji</div>
+                <div class="card-body">
+                    <canvas id="substancjeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h4 class="mb-3">Baza Raportów Klinicznych</h4>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <table id="raportyTable" class="table table-hover table-striped mb-0" style="width:100%">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Pacjent</th>
+                        <th>Lek / Substancja</th>
+                        <th>Objaw</th>
+                        <th class="text-center">Ból (Przed/Po)</th>
+                        <th>Wynik</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for zgloszenie in zgloszenia %}
+                    <tr>
+                        <td data-order="{{ zgloszenie.patient.age }}">
+                            {{ zgloszenie.patient.age }} lat / {{ zgloszenie.patient.get_gender_display }}
+                        </td>
+                        <td>
+                            <strong>{{ zgloszenie.drug.lek }}</strong><br>
+                            <small class="text-muted">{{ zgloszenie.drug.active_substance }}</small>
+                        </td>
+                        <td>
+                            {% for objaw in zgloszenie.objawy.all %}
+                                <span class="badge bg-secondary">{{ objaw.name }}</span>
+                            {% endfor %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-light text-dark border">{{ zgloszenie.nasilenie_przed }}</span> ➜ 
+                            <span class="badge bg-light text-dark border">{{ zgloszenie.nasilenie_po }}</span>
+                        </td>
+                        <td>
+                            {% if zgloszenie.nasilenie_przed > zgloszenie.nasilenie_po %}
+                                <span class="badge bg-success">✅ Pomógł</span>
+                            {% elif zgloszenie.nasilenie_przed < zgloszenie.nasilenie_po %}
+                                <span class="badge bg-danger">⚠️ Zaszkodził</span>
+                            {% else %}
+                                <span class="badge bg-secondary">➖ Bez zmian</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+    // --- WYKRES 1: DOUGHNUT (Ogólny) ---
+    new Chart(document.getElementById('skutecznoscChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Pomógł', 'Zaszkodził', 'Bez Zmian'],
+            datasets: [{
+                data: [{{ stat_pomoglo }}, {{ stat_zaszkodzilo }}, {{ stat_bez_zmian }}],
+                backgroundColor: ['#198754', '#dc3545', '#6c757d'],
+                borderWidth: 1
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // --- WYKRES 2: BAR (Płeć) ---
+    new Chart(document.getElementById('plecChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Kobiety', 'Mężczyźni'],
+            datasets: [{
+                label: 'Liczba skutecznych terapii',
+                data: [{{ plec_kobiety }}, {{ plec_mezczyzni }}],
+                backgroundColor: ['#d63384', '#0d6efd'], // Różowy i Niebieski
+                borderRadius: 5
+            }]
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // --- WYKRES 3: LINE (Wiek) ---
+    new Chart(document.getElementById('wiekChart'), {
+        type: 'line',
+        data: {
+            labels: ['Młodzi (<35)', 'Dorośli (35-65)', 'Seniorzy (>65)'],
+            datasets: [{
+                label: 'Skuteczność leczenia',
+                data: [{{ wiek_mlodzi }}, {{ wiek_sredni }}, {{ wiek_starsi }}],
+                borderColor: '#fd7e14', // Pomarańczowy
+                backgroundColor: 'rgba(253, 126, 20, 0.2)',
+                tension: 0.3, // Zakrzywienie linii
+                fill: true
+            }]
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // --- WYKRES 4: HORIZONTAL BAR (Ranking Substancji) ---
+    // Pobieramy dane z Django (musimy użyć filtru safe dla napisów)
+    const labelsSubstancje = {{ ranking_labels|safe }};
+    const dataSubstancje = {{ ranking_data|safe }};
+
+    new Chart(document.getElementById('substancjeChart'), {
+        type: 'bar',
+        data: {
+            labels: labelsSubstancje,
+            datasets: [{
+                label: 'Liczba wyleczeń',
+                data: dataSubstancje,
+                backgroundColor: '#6610f2', // Fioletowy
+                borderRadius: 4
+            }]
+        },
+        options: { 
+            indexAxis: 'y', // To zmienia wykres na poziomy!
+            responsive: true, 
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // --- TABELA ---
+    $(document).ready(function() {
+        $('#raportyTable').DataTable({
+            "pageLength": 50,
+            "language": {
+                "search": "Szukaj:",
+                "paginate": { "next": "Następna", "previous": "Poprzednia" },
+                "info": "Pokaż _START_ do _END_ z _TOTAL_",
+                "lengthMenu": "Pokaż _MENU_"
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
