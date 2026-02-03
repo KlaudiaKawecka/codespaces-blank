@@ -1,10 +1,14 @@
 from django.contrib import admin
-from django.urls import path, include  # Dodano include
-from core.views import home
+from django.urls import path, include  # <--- WAŻNE: dodano 'include'
+from core import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # To dodaje gotowe ścieżki: /login/ i /logout/
+    
+    # Ta linijka włącza gotowe widoki logowania i wylogowania (to naprawi błąd):
     path('accounts/', include('django.contrib.auth.urls')),
-    path('', home, name='home'),
+    
+    path('', views.home, name='home'),
+    path('lek/<int:id>/', views.drug_detail, name='drug_detail'),
+    path('producent/<int:id>/', views.manufacturer_detail, name='manufacturer_detail'),
 ]

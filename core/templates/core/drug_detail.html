@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Szczegóły leku: {{ lek.lek }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light p-5">
+    <div class="container">
+        <a href="/" class="btn btn-outline-primary mb-4">&larr; Powrót do Dashboardu</a>
+        
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-primary text-white p-4">
+                <h1 class="display-5">{{ lek.lek }}</h1>
+                <p class="lead mb-0">Substancja czynna: <strong>{{ lek.active_substance }}</strong></p>
+            </div>
+            <div class="card-body p-4">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>Informacje o produkcie</h4>
+                        <ul class="list-group list-group-flush mb-4">
+                            <li class="list-group-item"><strong>Producent:</strong> {{ lek.manufacturer.producent }}</li>
+                            <li class="list-group-item"><strong>Kategoria:</strong> Leki przeciwbólowe / NLPZ</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Statystyki w naszej bazie</h4>
+                        <div class="alert alert-info">
+                            Skuteczność leczenia tym preparatem wynosi: <strong>{{ skutecznosc }}%</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 class="mt-4">Historia użycia (Ostatnie zgłoszenia)</h4>
+                <table class="table table-striped mt-3">
+                    <thead><tr><th>Pacjent (Wiek)</th><th>Objaw</th><th>Efekt</th></tr></thead>
+                    <tbody>
+                        {% for zdarzenie in uzycia %}
+                        <tr>
+                            <td>{{ zdarzenie.patient.age }} lat</td>
+                            <td>{% for o in zdarzenie.objawy.all %}{{ o.name }}{% endfor %}</td>
+                            <td>
+                                {% if zdarzenie.nasilenie_przed > zdarzenie.nasilenie_po %}
+                                    <span class="badge bg-success">Pomógł ({{ zdarzenie.nasilenie_przed }}->{{ zdarzenie.nasilenie_po }})</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Brak poprawy</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3">Brak danych o użyciu tego leku.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

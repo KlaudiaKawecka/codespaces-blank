@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Producent: {{ producent.producent }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light p-5">
+    <div class="container">
+        <a href="/" class="btn btn-outline-dark mb-4">&larr; Powrót do Dashboardu</a>
+        
+        <div class="card shadow-lg border-0">
+            <div class="card-body p-5 text-center">
+                <h1 class="display-4 fw-bold text-success mb-3">{{ producent.producent }}</h1>
+                <p class="text-muted">Firma farmaceutyczna zarejestrowana w systemie FarmakoWatch.</p>
+                
+                <hr class="my-5">
+                
+                <h3 class="text-start mb-4">Leki tego producenta w naszej bazie:</h3>
+                <div class="row row-cols-1 row-cols-md-3 g-4 text-start">
+                    {% for lek in leki %}
+                    <div class="col">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary">{{ lek.lek }}</h5>
+                                <p class="card-text text-muted">{{ lek.active_substance }}</p>
+                                <a href="{% url 'drug_detail' lek.id %}" class="btn btn-sm btn-outline-primary stretched-link">Zobacz szczegóły</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p>Brak przypisanych leków.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

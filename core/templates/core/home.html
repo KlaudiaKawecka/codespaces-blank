@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <title>System Farmakowatchingu</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet"> <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .heatmap-table th, .heatmap-table td { text-align: center; vertical-align: middle; }
         .heatmap-cell { height: 50px; font-weight: bold; transition: 0.2s; }
         .heatmap-cell:hover { transform: scale(1.05); cursor: default; }
         
-        /* Styl dla Hero Section */
         .hero-section {
             background: linear-gradient(135deg, #0d6efd, #0a58ca);
             color: white;
@@ -21,7 +21,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
-        /* Styl dla menu bocznego */
+        /* Styl menu bocznego */
         .nav-pills .nav-link {
             color: #495057;
             border-radius: 10px;
@@ -30,35 +30,28 @@
             font-weight: 500;
             transition: 0.3s;
         }
-        .nav-pills .nav-link:hover {
-            background-color: #e9ecef;
-        }
+        .nav-pills .nav-link:hover { background-color: #e9ecef; }
         .nav-pills .nav-link.active {
-            background-color: #0d6efd; /* Niebieski aktywny */
+            background-color: #0d6efd;
             color: white;
             box-shadow: 0 4px 6px rgba(13, 110, 253, 0.3);
         }
-        .nav-pills .nav-link i {
-            margin-right: 10px;
-            font-size: 1.2rem;
-        }
+        .nav-pills .nav-link i { margin-right: 10px; font-size: 1.2rem; }
+        
+        .item-card { transition: 0.3s; text-decoration: none; color: inherit; }
+        .item-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important; cursor: pointer; border-color: #0d6efd; }
     </style>
 </head>
 <body class="bg-light">
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow sticky-top">
     <div class="container-fluid px-4">
-        <span class="navbar-brand h1 mb-0"><i class="bi bi-capsule-pill"></i> FarmakoWatch</span>
+        <a class="navbar-brand h1 mb-0" href="/"><i class="bi bi-capsule-pill"></i> FarmakoWatch</a>
+        
         <div class="d-flex">
             {% if user.is_authenticated %}
                 <span class="navbar-text me-3 text-white">Witaj, <strong>{{ user.username }}</strong>!</span>
-                {% if user.is_staff %}
-                    <a href="/admin" class="btn btn-warning btn-sm me-2">Panel Admina</a>
-                {% endif %}
-                <form action="{% url 'logout' %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-light btn-sm">Wyloguj</button>
-                </form>
+                <form action="{% url 'logout' %}" method="post">{% csrf_token %}<button type="submit" class="btn btn-outline-light btn-sm">Wyloguj</button></form>
             {% else %}
                 <a href="{% url 'login' %}" class="btn btn-success btn-sm">Zaloguj się</a>
             {% endif %}
@@ -74,18 +67,12 @@
                 <div class="card-body p-3">
                     <h6 class="text-muted text-uppercase small fw-bold mb-3 ms-2">Nawigacja</h6>
                     <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                        
-                        <button class="nav-link active text-start" id="v-pills-start-tab" data-bs-toggle="pill" data-bs-target="#v-pills-start" type="button" role="tab">
-                            <i class="bi bi-house-door"></i> Start
-                        </button>
-
-                        <button class="nav-link text-start" id="v-pills-stats-tab" data-bs-toggle="pill" data-bs-target="#v-pills-stats" type="button" role="tab">
-                            <i class="bi bi-bar-chart-line"></i> Statystyki
-                        </button>
-
-                        <button class="nav-link text-start" id="v-pills-db-tab" data-bs-toggle="pill" data-bs-target="#v-pills-db" type="button" role="tab">
-                            <i class="bi bi-table"></i> Baza Raportów
-                        </button>
+                        <button class="nav-link active text-start" id="v-pills-start-tab" data-bs-toggle="pill" data-bs-target="#v-pills-start" type="button"><i class="bi bi-house-door"></i> Start</button>
+                        <button class="nav-link text-start" id="v-pills-stats-tab" data-bs-toggle="pill" data-bs-target="#v-pills-stats" type="button"><i class="bi bi-bar-chart-line"></i> Statystyki</button>
+                        <button class="nav-link text-start" id="v-pills-objawy-tab" data-bs-toggle="pill" data-bs-target="#v-pills-objawy" type="button"><i class="bi bi-activity"></i> Objawy</button>
+                        <button class="nav-link text-start" id="v-pills-leki-tab" data-bs-toggle="pill" data-bs-target="#v-pills-leki" type="button"><i class="bi bi-capsule"></i> Leki</button>
+                        <button class="nav-link text-start" id="v-pills-producenci-tab" data-bs-toggle="pill" data-bs-target="#v-pills-producenci" type="button"><i class="bi bi-buildings"></i> Producenci</button>
+                        <button class="nav-link text-start" id="v-pills-db-tab" data-bs-toggle="pill" data-bs-target="#v-pills-db" type="button"><i class="bi bi-table"></i> Baza Raportów</button>
                     </div>
                 </div>
             </div>
@@ -98,18 +85,18 @@
                     <div class="hero-section">
                         <div class="row align-items-center">
                             <div class="col-lg-8">
-                                <h1 class="display-4 fw-bold mb-3">System Monitorowania Bezpieczeństwa Farmakoterapii</h1>
-                                <p class="lead">
-                                    Witaj w centralnym hubie analitycznym. Platforma ta służy do gromadzenia, przetwarzania 
-                                    i wizualizacji zgłoszeń dotyczących działań niepożądanych produktów leczniczych.
+                                <h1 class="display-5 fw-bold mb-3">System Monitorowania Bezpieczeństwa Farmakoterapii</h1>
+                                <p class="lead" style="font-size: 1.1rem;">
+                                    Badanie kliniczne objęło grupę <strong>{{ liczba_pacjentow }} pacjentów</strong> zgłaszających się z jednym z <strong>{{ liczba_objawow }} głównych objawów</strong> chorobowych.
+                                    Metodologia opiera się na zasadzie "jeden pacjent – jeden lek".
+                                </p>
+                                <p style="opacity: 0.9;">
+                                    Monitorujemy działanie <strong>{{ liczba_lekow }} produktów leczniczych</strong> (opartych na 10 substancjach czynnych) pochodzących od <strong>{{ liczba_producentow }} producentów</strong>.
+                                    Kluczowym wskaźnikiem jest zmiana nasilenia dolegliwości mierzona przed i po podaniu leku.
                                 </p>
                                 <hr class="my-4 border-light">
-                                <p class="mb-4">
-                                    Wybierz z menu po lewej stronie <strong>Statystyki</strong>, aby zobaczyć analizy skuteczności, 
-                                    lub <strong>Baza Raportów</strong>, aby przeglądać surowe dane kliniczne.
-                                </p>
                                 <button class="btn btn-light btn-lg text-primary fw-bold" onclick="document.getElementById('v-pills-stats-tab').click()">
-                                    Przejdź do analizy <i class="bi bi-arrow-right"></i>
+                                    Przejdź do wyników badań <i class="bi bi-arrow-right"></i>
                                 </button>
                             </div>
                             <div class="col-lg-4 text-center">
@@ -117,58 +104,31 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="row g-4">
-                        <div class="col-md-4">
-                            <div class="card border-0 shadow-sm h-100">
-                                <div class="card-body text-center">
-                                    <h2 class="text-primary fw-bold">{{ liczba_zgloszen }}</h2>
-                                    <p class="text-muted">Zgłoszonych Raportów</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card border-0 shadow-sm h-100">
-                                <div class="card-body text-center">
-                                    <h2 class="text-success fw-bold">{{ liczba_pacjentow }}</h2>
-                                    <p class="text-muted">Monitorowanych Pacjentów</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card border-0 shadow-sm h-100">
-                                <div class="card-body text-center">
-                                    <h2 class="text-info fw-bold">{{ liczba_lekow }}</h2>
-                                    <p class="text-muted">Leków w bazie</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
-
+                
                 <div class="tab-pane fade" id="v-pills-stats" role="tabpanel">
                     <h3 class="mb-4 text-dark border-bottom pb-2">Panel Analityczny</h3>
-
+                    
                     <div class="row mb-4">
-                        <div class="col-lg-4">
-                            <div class="card shadow-sm h-100">
-                                <div class="card-header bg-white fw-bold">Ogólna Skuteczność</div>
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-header bg-white fw-bold border-bottom-0 pt-3">Ogólna Skuteczność</div>
                                 <div class="card-body">
                                     <canvas id="skutecznoscChart"></canvas>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-4">
-                            <div class="card shadow-sm h-100">
-                                <div class="card-header bg-white fw-bold">Skuteczność wg Płci</div>
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-header bg-white fw-bold border-bottom-0 pt-3">Skuteczność wg Płci</div>
                                 <div class="card-body">
                                     <canvas id="plecChart"></canvas>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-4">
-                            <div class="card shadow-sm h-100">
-                                <div class="card-header bg-white fw-bold">Skuteczność wg Wieku</div>
+                        <div class="col-lg-4 col-md-12 mb-3">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-header bg-white fw-bold border-bottom-0 pt-3">Skuteczność wg Wieku</div>
                                 <div class="card-body">
                                     <canvas id="wiekChart"></canvas>
                                 </div>
@@ -178,24 +138,30 @@
 
                     <div class="row mb-4">
                         <div class="col-12">
-                            <div class="card shadow-sm">
-                                <div class="card-header bg-white fw-bold">🏆 Ranking Substancji Czynnych</div>
-                                <div class="card-body" style="height: 300px;">
+                            <div class="card shadow-sm border-0">
+                                <div class="card-header bg-white fw-bold pt-3">🏆 Ranking Substancji Czynnych</div>
+                                <div class="card-body" style="height:350px">
                                     <canvas id="substancjeChart"></canvas>
                                 </div>
                             </div>
                         </div>
                     </div>
-
+                    
                     <div class="card shadow-sm mb-5 border-0">
-                        <div class="card-header bg-white fw-bold">
-                            🌡️ Mapa Ciepła: Skuteczność leku w grupach wiekowych
+                        <div class="card-header bg-white fw-bold pt-3 d-flex justify-content-between align-items-center">
+                            <span>🌡️ Mapa Ciepła: Skuteczność leku w grupach wiekowych</span>
                         </div>
-                        <div class="card-body p-0">
+                        <div class="card-body">
+                             <div class="d-flex mb-3 small">
+                                <span class="me-3"><span class="badge bg-success opacity-75 me-1">&nbsp;</span> Wysoka skuteczność (>70%)</span>
+                                <span class="me-3"><span class="badge bg-warning opacity-75 text-dark me-1">&nbsp;</span> Średnia skuteczność (40-70%)</span>
+                                <span><span class="badge bg-danger opacity-75 me-1">&nbsp;</span> Niska skuteczność (<40%)</span>
+                            </div>
+
                             <table class="table table-bordered mb-0 heatmap-table">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 25%">Substancja Czynna</th>
+                                        <th style="width: 25%;">Substancja Czynna</th>
                                         <th>Młodzi (18-35)</th>
                                         <th>Dorośli (36-65)</th>
                                         <th>Seniorzy (65+)</th>
@@ -204,11 +170,9 @@
                                 <tbody>
                                     {% for wiersz in heatmap_data %}
                                     <tr>
-                                        <td class="fw-bold text-start ps-4">{{ wiersz.nazwa }}</td>
+                                        <td class="fw-bold ps-4 text-start">{{ wiersz.nazwa }}</td>
                                         {% for wynik in wiersz.wyniki %}
-                                            <td class="heatmap-cell {{ wynik.kolor }}">
-                                                {{ wynik.procent }}%
-                                            </td>
+                                            <td class="{{ wynik.kolor }}">{{ wynik.procent }}%</td>
                                         {% endfor %}
                                     </tr>
                                     {% endfor %}
@@ -218,48 +182,91 @@
                     </div>
                 </div>
 
+                <div class="tab-pane fade" id="v-pills-objawy" role="tabpanel">
+                    <h3 class="mb-4 text-dark border-bottom pb-2">Analiza Objawów Klinicznych</h3>
+                    <p class="text-muted mb-4">Poniższa tabela przedstawia najskuteczniejsze terapie dla każdego z monitorowanych objawów.</p>
+                    <div class="row g-4">
+                        {% for item in objawy_data %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card shadow-sm h-100 border-0">
+                                <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
+                                    <span>{{ item.objaw.name }}</span>
+                                    <i class="bi bi-activity"></i>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-3 text-muted">Najskuteczniejsze leki:</h6>
+                                    <ul class="list-group list-group-flush">
+                                        {% for lek in item.top_leki %}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                <span>
+                                                    <a href="{% url 'drug_detail' lek.id %}" class="text-decoration-none fw-bold">{{ lek.lek }}</a>
+                                                    <br><small class="text-muted" style="font-size:0.8em">{{ lek.active_substance }}</small>
+                                                </span>
+                                                <span class="badge bg-success rounded-pill">{{ lek.liczba_wyleczen }} wyl.</span>
+                                            </li>
+                                        {% empty %}
+                                            <li class="list-group-item text-muted">Brak wystarczających danych.</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="v-pills-leki" role="tabpanel">
+                    <h3 class="mb-4 text-dark border-bottom pb-2">Katalog Produktów Leczniczych</h3>
+                    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-3">
+                        {% for lek in lista_lekow %}
+                        <div class="col">
+                            <a href="{% url 'drug_detail' lek.id %}" class="card h-100 shadow-sm item-card border-0">
+                                <div class="card-body text-center">
+                                    <div class="mb-2 text-primary"><i class="bi bi-capsule" style="font-size: 2rem;"></i></div>
+                                    <h6 class="card-title fw-bold mb-1">{{ lek.lek }}</h6>
+                                    <small class="text-muted">{{ lek.active_substance }}</small>
+                                </div>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="v-pills-producenci" role="tabpanel">
+                    <h3 class="mb-4 text-dark border-bottom pb-2">Baza Producentów</h3>
+                    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-3">
+                        {% for producent in lista_producentow %}
+                        <div class="col">
+                            <a href="{% url 'manufacturer_detail' producent.id %}" class="card h-100 shadow-sm item-card border-0">
+                                <div class="card-body text-center">
+                                    <div class="mb-2 text-success"><i class="bi bi-building" style="font-size: 2rem;"></i></div>
+                                    <h6 class="card-title fw-bold">{{ producent.producent }}</h6>
+                                </div>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
                 <div class="tab-pane fade" id="v-pills-db" role="tabpanel">
-                    <h3 class="mb-4 text-dark border-bottom pb-2">Rejestr Zgłoszeń Klinicznych</h3>
-                    
+                    <h3 class="mb-4">Rejestr Zgłoszeń</h3>
                     <div class="card shadow-sm">
                         <div class="card-body">
                             <table id="raportyTable" class="table table-hover table-striped mb-0" style="width:100%">
                                 <thead class="table-dark">
-                                    <tr>
-                                        <th>Pacjent</th>
-                                        <th>Lek / Substancja</th>
-                                        <th>Objaw</th>
-                                        <th class="text-center">Ból (Przed/Po)</th>
-                                        <th>Wynik</th>
-                                    </tr>
+                                    <tr><th>Pacjent</th><th>Lek</th><th>Objaw</th><th>Ból (Przed/Po)</th><th>Wynik</th></tr>
                                 </thead>
                                 <tbody>
                                     {% for zgloszenie in zgloszenia %}
                                     <tr>
-                                        <td data-order="{{ zgloszenie.patient.age }}">
-                                            {{ zgloszenie.patient.age }} lat / {{ zgloszenie.patient.get_gender_display }}
-                                        </td>
+                                        <td>{{ zgloszenie.patient.age }} lat / {{ zgloszenie.patient.get_gender_display }}</td>
+                                        <td><strong>{{ zgloszenie.drug.lek }}</strong><br><small>{{ zgloszenie.drug.active_substance }}</small></td>
+                                        <td>{% for objaw in zgloszenie.objawy.all %}<span class="badge bg-secondary">{{ objaw.name }}</span>{% endfor %}</td>
+                                        <td>{{ zgloszenie.nasilenie_przed }} ➜ {{ zgloszenie.nasilenie_po }}</td>
                                         <td>
-                                            <strong>{{ zgloszenie.drug.lek }}</strong><br>
-                                            <small class="text-muted">{{ zgloszenie.drug.active_substance }}</small>
-                                        </td>
-                                        <td>
-                                            {% for objaw in zgloszenie.objawy.all %}
-                                                <span class="badge bg-secondary">{{ objaw.name }}</span>
-                                            {% endfor %}
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge bg-light text-dark border">{{ zgloszenie.nasilenie_przed }}</span> ➜ 
-                                            <span class="badge bg-light text-dark border">{{ zgloszenie.nasilenie_po }}</span>
-                                        </td>
-                                        <td>
-                                            {% if zgloszenie.nasilenie_przed > zgloszenie.nasilenie_po %}
-                                                <span class="badge bg-success">✅ Pomógł</span>
-                                            {% elif zgloszenie.nasilenie_przed < zgloszenie.nasilenie_po %}
-                                                <span class="badge bg-danger">⚠️ Zaszkodził</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary">➖ Bez zmian</span>
-                                            {% endif %}
+                                            {% if zgloszenie.nasilenie_przed > zgloszenie.nasilenie_po %}<span class="badge bg-success">✅ Pomógł</span>
+                                            {% elif zgloszenie.nasilenie_przed < zgloszenie.nasilenie_po %}<span class="badge bg-danger">⚠️ Zaszkodził</span>
+                                            {% else %}<span class="badge bg-secondary">➖ Bez zmian</span>{% endif %}
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -269,46 +276,46 @@
                     </div>
                 </div>
 
-            </div> </div> </div> </div> <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+            </div>
+        </div>
+    </div>
+</div>
 
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script>
-    // --- KONFIGURACJA WYKRESÓW ---
-    // Definiujemy zmienne globalnie, aby mieć do nich dostęp
     let chart1, chart2, chart3, chart4;
 
     function initCharts() {
-        // 1. KOŁOWY
+        // Wykres 1: Kołowy
         chart1 = new Chart(document.getElementById('skutecznoscChart'), {
             type: 'doughnut',
             data: {
                 labels: ['Pomógł', 'Zaszkodził', 'Bez Zmian'],
                 datasets: [{
                     data: [{{ stat_pomoglo }}, {{ stat_zaszkodzilo }}, {{ stat_bez_zmian }}],
-                    backgroundColor: ['#198754', '#dc3545', '#6c757d'],
-                    borderWidth: 1
+                    backgroundColor: ['#198754', '#dc3545', '#6c757d']
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            options: { plugins: { legend: { position: 'bottom' } } }
         });
 
-        // 2. SŁUPKOWY (PŁEĆ)
+        // Wykres 2: Słupkowy (Płeć)
         chart2 = new Chart(document.getElementById('plecChart'), {
             type: 'bar',
             data: {
                 labels: ['Kobiety', 'Mężczyźni'],
                 datasets: [{
-                    label: 'Liczba skutecznych terapii',
                     data: [{{ plec_kobiety }}, {{ plec_mezczyzni }}],
-                    backgroundColor: ['#d63384', '#0d6efd'],
-                    borderRadius: 5
+                    backgroundColor: ['#d63384', '#0d6efd']
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            options: { plugins: { legend: { display: false } } }
         });
 
-        // 3. LINIOWY (WIEK)
+        // Wykres 3: Liniowy (Wiek)
         chart3 = new Chart(document.getElementById('wiekChart'), {
             type: 'line',
             data: {
@@ -318,50 +325,49 @@
                     data: [{{ wiek_mlodzi }}, {{ wiek_sredni }}, {{ wiek_starsi }}],
                     borderColor: '#fd7e14',
                     backgroundColor: 'rgba(253, 126, 20, 0.2)',
-                    tension: 0.3,
-                    fill: true
+                    fill: true,
+                    tension: 0.3
                 }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            }
         });
 
-        // 4. RANKING SUBSTANCJI
-        const labelsSubstancje = {{ ranking_labels|safe }};
-        const dataSubstancje = {{ ranking_data|safe }};
-
+        // Wykres 4: Ranking Substancji (ZMIANA: RÓŻNE KOLORY SŁUPKÓW)
         chart4 = new Chart(document.getElementById('substancjeChart'), {
             type: 'bar',
             data: {
-                labels: labelsSubstancje,
+                labels: {{ ranking_labels|safe }},
                 datasets: [{
-                    label: 'Liczba wyleczeń',
-                    data: dataSubstancje,
+                    label: 'Liczba skutecznych terapii',
+                    data: {{ ranking_data|safe }},
+                    // Tutaj przywracamy paletę kolorów:
                     backgroundColor: [
-                        'rgba(54, 162, 235, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 206, 86, 0.7)',
-                        'rgba(75, 192, 192, 0.7)', 'rgba(255, 99, 132, 0.7)'
+                        'rgba(54, 162, 235, 0.7)', // Niebieski
+                        'rgba(153, 102, 255, 0.7)', // Fioletowy
+                        'rgba(255, 206, 86, 0.7)',  // Żółty
+                        'rgba(75, 192, 192, 0.7)',  // Turkusowy
+                        'rgba(255, 99, 132, 0.7)'   // Różowy
                     ],
                     borderColor: [
-                        'rgba(54, 162, 235, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)'
                     ],
                     borderWidth: 1
                 }]
             },
             options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
+                indexAxis: 'y', // Poziome słupki
                 plugins: { legend: { display: false } }
             }
         });
     }
 
-    // Inicjalizacja wykresów od razu
+    // Uruchomienie wykresów
     initCharts();
 
-    // --- FIX DLA WYKRESÓW W ZAKŁADKACH ---
-    // Wykresy Chart.js mogą się źle skalować, gdy są w ukrytej zakładce (display: none).
-    // Ten kod naprawia to, wymuszając przerysowanie wykresu po kliknięciu w zakładkę "Statystyki".
+    // Fix na odświeżanie wykresów przy zmianie zakładki
     const tabEl = document.querySelector('button[data-bs-target="#v-pills-stats"]');
     tabEl.addEventListener('shown.bs.tab', event => {
         if(chart1) chart1.resize();
@@ -369,15 +375,19 @@
         if(chart3) chart3.resize();
         if(chart4) chart4.resize();
     });
-
-    // --- TABELA ---
+    
+    // Tabela DataTables
     $(document).ready(function() {
         $('#raportyTable').DataTable({
             "pageLength": 25,
-            "language": { "search": "Szukaj w bazie:", "paginate": { "next": ">", "previous": "<" }, "info": "Wyświetlono _START_ do _END_ z _TOTAL_ raportów" }
+            "language": {
+                "search": "Szukaj:",
+                "paginate": { "next": ">", "previous": "<" },
+                "lengthMenu": "Pokaż _MENU_ wpisów",
+                "info": "Wyświetlono _START_ do _END_ z _TOTAL_ wpisów"
+            }
         });
     });
 </script>
-
 </body>
 </html>
