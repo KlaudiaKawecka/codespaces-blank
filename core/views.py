@@ -24,7 +24,8 @@ def home(request):
     grupa_sredni = wszystkie_zgloszenia.filter(patient__age__gte=35, patient__age__lte=65, nasilenie_przed__gt=F('nasilenie_po')).count()
     grupa_starsi = wszystkie_zgloszenia.filter(patient__age__gt=65, nasilenie_przed__gt=F('nasilenie_po')).count()
 
-    # --- 5. TOP 5 SUBSTANCJI (Ranking) ---
+    # --- 5. TOP 5 SUBSTANCJI (Ranking do wykresu słupkowego) ---
+    # To zostawiamy tak jak było, żeby wykres słupkowy nie był za gęsty
     ranking_substancji = (
         Zdarzenie.objects
         .filter(nasilenie_przed__gt=F('nasilenie_po'))
@@ -36,11 +37,12 @@ def home(request):
     top_substancje_wyniki = [item['sukcesy'] for item in ranking_substancji]
 
     # --- 6. HEATMAPA (Lek x Wiek) ---
-    # Wybieramy 5 najpopularniejszych substancji do analizy
-    top_substancje_lista = [item['drug__active_substance'] for item in ranking_substancji]
+    # ZMIANA: Tutaj pobieramy WSZYSTKIE unikalne substancje z bazy leków, alfabetycznie
+    wszystkie_substancje_lista = Drug.objects.values_list('active_substance', flat=True).distinct().order_by('active_substance')
     
     heatmap_data = []
-    for substancja in top_substancje_lista:
+    # Zmieniliśmy pętlę, by iterowała po 'wszystkie_substancje_lista'
+    for substancja in wszystkie_substancje_lista:
         wiersz = {'nazwa': substancja, 'wyniki': []}
         grupy_wiekowe = [
             ('Młodzi (18-35)', 18, 35),
@@ -67,9 +69,13 @@ def home(request):
             
             # Dobieramy kolor zależnie od procentu
             klasa_koloru = "bg-light text-muted"
-            if procent > 0: klasa_koloru = "bg-danger text-white opacity-75" # Słabo
-            if procent > 40: klasa_koloru = "bg-warning text-dark opacity-75" # Średnio
-            if procent > 70: klasa_koloru = "bg-success text-white opacity-75" # Dobrze
+            if total_w_grupie > 0: # Kolorujemy tylko jeśli były jakiekolwiek dane
+                if procent >= 0: klasa_koloru = "bg-danger text-white opacity-75" # Słabo
+                if procent > 40: klasa_koloru = "bg-warning text-dark opacity-75" # Średnio
+                if procent > 70: klasa_koloru = "bg-success text-white opacity-75" # Dobrze
+            else:
+                 # Jeśli nie ma danych (0 zdarzeń), zostawiamy szary
+                 klasa_koloru = "bg-light text-muted"
             
             wiersz['wyniki'].append({'procent': procent, 'kolor': klasa_koloru})
         
@@ -90,7 +96,7 @@ def home(request):
         'wiek_starsi': grupa_starsi,
         'ranking_labels': top_substancje_nazwy,
         'ranking_data': top_substancje_wyniki,
-        'heatmap_data': heatmap_data # Przekazujemy dane do heatmapy
+        'heatmap_data': heatmap_data
     }
 
     return render(request, 'core/home.html', context)
